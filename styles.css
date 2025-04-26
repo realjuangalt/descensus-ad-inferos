@@ -1,0 +1,101 @@
+.fiery-gradient {
+  background: linear-gradient(45deg, #1a1a1a, #2a1c1c);
+}
+.glow-border {
+  box-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 0 16px rgba(255, 0, 0, 0.4);
+}
+.chat-bg {
+  background: rgba(40, 40, 40, 0.9);
+  border: 2px solid #a50b0b;
+}
+.kill-count-overlay {
+  background: rgba(40, 40, 40, 0.9);
+  border: 2px solid #a50b0b;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  color: #f0f0f0;
+  font-weight: bold;
+}
+.fiery-button {
+  background: linear-gradient(45deg, #a50b0b, #d32f2f);
+  transition: background 0.3s ease;
+}
+.fiery-button:hover {
+  background: linear-gradient(45deg, #d32f2f, #a50b0b);
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.dialogue-text {
+  animation: fadeIn 0.5s ease-in;
+}
+.satan-fallback {
+  background: radial-gradient(circle, #d32f2f, #7f0000);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+.satan-fallback::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 15px;
+  height: 15px;
+  background: black;
+}
+.satan-fallback::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 15px;
+  height: 15px;
+  background: black;
+}
+.satan-fallback .pentagram {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><path d="M12 2L15 8.5H9L12 2zM12 2L18 9H6L12 2zM12 22L9 15.5H15L12 22zM12 22L6 15H18L12 22zM2 12L8.5 9H15.5L2 12zM22 12L15.5 15H8.5L22 12z"/></svg>') no-repeat center;
+  background-size: contain;
+}
+.jesus-fallback {
+  background: radial-gradient(circle, #f0f0f0, #d4c47c);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+.jesus-fallback::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  border: 2px solid #d4af37;
+  border-radius: 50%;
+}
+.jesus-fallback .cross {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#d4af37" stroke-width="2"><path d="M12 4v16M4 12h16"/></svg>') no-repeat center;
+  background-size: contain;
+}
+#game {
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  height: auto;
+}

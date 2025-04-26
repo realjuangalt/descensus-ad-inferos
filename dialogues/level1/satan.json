@@ -1,0 +1,34 @@
+[
+  {
+    "text": {
+      "modern": "Satan sneers: \"Who dares enter my realm? Are you the Son of God?\"",
+      "old": "Satan sneers: \"Who dares enter my realm? Art thou the one who boasteth to be the Son of God?\""
+    },
+    "prompt": "Choose your response:",
+    "options": [
+      { "response": "I am Jesus" },
+      { "response": "I challenge you" }
+    ]
+  },
+  {
+    "text": {
+      "modern": "Satan laughs: \"A man who fears death, yet claims such power? I’ve prepared a cross for you!\"",
+      "old": "Satan laughs: \"A man who feareth death, yet claimeth such power? I have prepared a cross for thee!\""
+    },
+    "prompt": "Choose your response:",
+    "options": [
+      { "response": "You will not win" },
+      { "response": "My light will prevail" }
+    ]
+  },
+  {
+    "text": {
+      "modern": "Satan roars: \"Then let’s see your might, Son of God! Hell will not yield!\"",
+      "old": "Satan roars: \"Then let us see thy might, Son of God! Hell shall not yield!\""
+    },
+    "prompt": "Prepare for battle:",
+    "options": [
+      { "response": "Prepare for battle" }
+    ]
+  }
+]
