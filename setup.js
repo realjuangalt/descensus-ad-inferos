@@ -270,7 +270,7 @@ class GameInterface {
       const maxDistance = 40
 
       if (distance > 0 && this.onMove) {
-        const factor = Math.min(distance, maxDistance) / maxDistance * 0.75
+        const factor = Math.min(distance, maxDistance) / maxDistance * 0.375;
         this.onMove((dx / distance) * factor, (dy / distance) * factor)
       }
     }
