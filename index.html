@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>COSMIC DEFENDER</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1 class="game-header">COSMIC DEFENDER</h1>
+  
+  <div class="controls-info">
+    <div class="controls-info-toggle" id="controlsToggle">?</div>
+    <div class="controls-info-panel" id="controlsPanel">
+      <h3>Controls</h3>
+      <div class="controls-columns">
+        <div class="controls-column">
+          <h4>Touch Controls:</h4>
+          <ul>
+            <li>Left joystick: Move</li>
+            <li>Right joystick: Aim & shoot</li>
+            <li>B button: Toggle weapon</li>
+          </ul>
+        </div>
+        <div class="controls-column">
+          <h4>Keyboard/Mouse:</h4>
+          <ul>
+            <li>WASD or Arrow keys: Move</li>
+            <li>Mouse: Aim</li>
+            <li>Left click: Shoot</li>
+            <li>Space bar: Toggle weapon</li>
+          </ul>
+        </div>
+      </div>
+      <div class="weapons-info">
+        <h4>Weapons:</h4>
+        <ul>
+          <li>GUN: Unlimited ammo, single target</li>
+          <li>BOMB: Limited ammo, area damage</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  
+  <div class="game-container">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+  
+  <div class="controls">
+    <div class="joystick-container" id="moveJoystick">
+      <div class="joystick-base">
+        <div class="joystick-thumb" id="moveThumb"></div>
+      </div>
+      <div class="joystick-label">MOVE</div>
+    </div>
+    
+    <div class="weapon-info" id="weaponInfo">GUN: ∞</div>
+    
+    <div class="joystick-container" id="aimJoystick">
+      <div class="joystick-base">
+        <div class="joystick-thumb" id="aimThumb"></div>
+      </div>
+      <div class="action-button" id="actionButton">B</div>
+      <div class="joystick-label">AIM</div>
+    </div>
+  </div>
+
+  <script src="setup.js"></script>
+  <script src="game.js"></script>
+  <script>
+    // Initialize the game when the page loads
+    window.addEventListener('load', () => {
+      // Initialize the interface
+      const gameInterface = new GameInterface();
+      gameInterface.init();
+      
+      // Initialize the game
+      const game = new CosmicDefenderGame(gameInterface);
+      game.init();
+    });
+  </script>
+</body>
+</html>
