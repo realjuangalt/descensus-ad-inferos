@@ -1,0 +1,335 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Defender</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #111;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+    #header {
+      font-size: 24px;
+      padding: 10px;
+      text-align: center;
+    }
+    #canvas {
+      border: 1px solid #fff;
+      touch-action: none;
+      max-width: 100%;
+      max-height: 60vh;
+    }
+    #controls {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+    }
+    .joystick {
+      width: 100px;
+      height: 100px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      position: relative;
+      touch-action: none;
+    }
+    #aim.joystick {
+      width: 140px;
+      height: 140px;
+    }
+    .knob {
+      width: 40px;
+      height: 40px;
+      background: #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    #action {
+      width: 60px;
+      height: 60px;
+      background: #f00;
+      border-radius: 50%;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      touch-action: none;
+      margin: 0 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="header">COSMIC DEFENDER</div>
+  <canvas id="canvas"></canvas>
+  <div id="controls">
+    <div id="move" class="joystick"><div class="knob"></div></div>
+    <button id="action">B</button>
+    <div id="aim" class="joystick"><div class="knob"></div></div>
+  </div>
+
+  <script>
+    class Interface {
+      constructor() {
+        this.canvas = document.getElementById('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.moveJoystick = document.getElementById('move');
+        this.aimJoystick = document.getElementById('aim');
+        this.actionButton = document.getElementById('action');
+        this.callbacks = {};
+        this.keys = { w: false, a: false, s: false, d: false };
+        this.shootInterval = null;
+        this.init();
+      }
+
+      init() {
+        this.resizeCanvas();
+        window.addEventListener('resize', () => this.resizeCanvas());
+        this.setupTouchControls();
+        this.setupKeyboardControls();
+        this.setupMouseControls();
+      }
+
+      resizeCanvas() {
+        const maxWidth = window.innerWidth * 0.9;
+        const maxHeight = window.innerHeight * 0.6;
+        this.canvas.width = Math.min(400, maxWidth);
+        this.canvas.height = Math.min(600, maxHeight);
+        if (this.callbacks.onResize) {
+          this.callbacks.onResize(this.canvas.width, this.canvas.height);
+        }
+      }
+
+      setCallback(event, callback) {
+        this.callbacks[event] = callback;
+      }
+
+      setupTouchControls() {
+        const moveKnob = this.moveJoystick.querySelector('.knob');
+        const aimKnob = this.aimJoystick.querySelector('.knob');
+
+        const handleJoystick = (element, knob, callbackMove, callbackShoot) => {
+          let startX, startY, active = false;
+
+          const moveKnobTo = (x, y) => {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const dx = x - rect.left - centerX;
+            const dy = y - rect.top - centerY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxDist = rect.width / 2 - knob.offsetWidth / 2;
+            const angle = Math.atan2(dy, dx);
+            const limitedDist = Math.min(dist, maxDist);
+            const newX = centerX + Math.cos(angle) * limitedDist - knob.offsetWidth / 2;
+            const newY = centerY + Math.sin(angle) * limitedDist - knob.offsetHeight / 2;
+            knob.style.left = newX + 'px';
+            knob.style.top = newY + 'px';
+            const normX = (dx / maxDist).toFixed(2);
+            const normY = (dy / maxDist).toFixed(2);
+            const distFactor = dist / maxDist;
+            return { dx: normX, dy: normY, dist: distFactor };
+          };
+
+          const resetKnob = () => {
+            knob.style.left = '50%';
+            knob.style.top = '50%';
+            knob.style.transform = 'translate(-50%, -50%)';
+          };
+
+          element.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            active = true;
+          });
+
+          element.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!active) return;
+            const touch = e.touches[0];
+            const { dx, dy, dist } = moveKnobTo(touch.clientX, touch.clientY);
+            if (callbackMove) {
+              if (element === this.moveJoystick) {
+                // Normalized direction for move joystick
+                const magnitude = Math.sqrt(dx * dx + dy * dy);
+                if (magnitude > 0.2) {
+                  const normDx = parseFloat(dx) / magnitude;
+                  const normDy = parseFloat(dy) / magnitude;
+                  callbackMove(normDx, normDy, true);
+                } else {
+                  callbackMove(0, 0, true);
+                }
+              } else {
+                callbackMove(dx, dy, true);
+              }
+            }
+            if (callbackShoot && dist > 0.3) callbackShoot(dist, true);
+          });
+
+          element.addEventListener('touchend', () => {
+            resetKnob();
+            active = false;
+            if (callbackMove) callbackMove(0, 0, true);
+            if (callbackShoot) callbackShoot(0, false);
+          });
+        };
+
+        handleJoystick(this.moveJoystick, moveKnob, (dx, dy, isMobile) => {
+          if (this.callbacks.onMove) this.callbacks.onMove(dx, dy, isMobile);
+        });
+
+        handleJoystick(this.aimJoystick, aimKnob, (x, y, isMobile) => {
+          if (this.callbacks.onAim) {
+            const rect = this.canvas.getBoundingClientRect();
+            const canvasX = (x * this.canvas.width) / 2 + this.canvas.width / 2;
+            const canvasY = (y * this.canvas.height) / 2 + this.canvas.height / 2;
+            this.callbacks.onAim(canvasX, canvasY);
+          }
+        }, (dist, isActive) => {
+          if (this.callbacks.onShoot) this.callbacks.onShoot(dist, isActive);
+        });
+
+        this.actionButton.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          if (this.callbacks.onAction) this.callbacks.onAction();
+        });
+
+        this.canvas.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          if (this.callbacks.onRestart) this.callbacks.onRestart();
+        });
+      }
+
+      setupKeyboardControls() {
+        window.addEventListener('keydown', (e) => {
+          if (e.key === 'w') this.keys.w = true;
+          if (e.key === 'a') this.keys.a = true;
+          if (e.key === 's') this.keys.s = true;
+          if (e.key === 'd') this.keys.d = true;
+          if (e.key === ' ' && this.callbacks.onAction) {
+            e.preventDefault();
+            this.callbacks.onAction();
+          }
+          this.updateMovement();
+        });
+
+        window.addEventListener('keyup', (e) => {
+          if (e.key === 'w') this.keys.w = false;
+          if (e.key === 'a') this.keys.a = false;
+          if (e.key === 's') this.keys.s = false;
+          if (e.key === 'd') this.keys.d = false;
+          this.updateMovement();
+        });
+      }
+
+      updateMovement() {
+        let dx = 0, dy = 0;
+        if (this.keys.w) dy -= 1;
+        if (this.keys.s) dy += 1;
+        if (this.keys.a) dx -= 1;
+        if (this.keys.d) dx += 1;
+        if (this.callbacks.onMove && (dx !== 0 || dy !== 0)) {
+          const length = Math.sqrt(dx * dx + dy * dy);
+          this.callbacks.onMove(dx / length, dy / length, false);
+        } else if (this.callbacks.onMove) {
+          this.callbacks.onMove(dx, dy, false);
+        }
+      }
+
+      setupMouseControls() {
+        this.canvas.addEventListener('mousemove', (e) => {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          if (this.callbacks.onAim) this.callbacks.onAim(x, y);
+        });
+
+        this.canvas.addEventListener('mousedown', (e) => {
+          if (e.button === 0 && this.callbacks.onShoot) {
+            const rect = this.canvas.getBoundingClientRect();
+            const dx = (e.clientX - rect.left) - this.canvas.width / 2;
+            const dy = (e.clientY - rect.top) - this.canvas.height / 2;
+            const dist = Math.min(1, Math.sqrt(dx * dx + dy * dy) / (this.canvas.width / 2));
+            this.callbacks.onShoot(dist, true);
+            clearInterval(this.shootInterval);
+            this.shootInterval = setInterval(() => {
+              this.callbacks.onShoot(dist, true);
+            }, 50);
+          }
+        });
+
+        this.canvas.addEventListener('mouseup', (e) => {
+          if (e.button === 0 && this.callbacks.onShoot) {
+            clearInterval(this.shootInterval);
+            this.shootInterval = null;
+            this.callbacks.onShoot(0, false);
+          }
+        });
+
+        this.canvas.addEventListener('click', (e) => {
+          if (this.callbacks.onRestart) this.callbacks.onRestart();
+        });
+      }
+    }
+
+    const ui = new Interface();
+    const script = document.createElement('script');
+    script.src = 'game.js';
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
