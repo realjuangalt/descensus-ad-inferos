@@ -131,6 +131,7 @@
         this.callbacks = {};
         this.keys = { w: false, a: false, s: false, d: false };
         this.shootInterval = null;
+        this.touchIds = { move: null, aim: null }; // Track touch identifiers
         this.init();
       }
 
@@ -161,8 +162,6 @@
         const aimKnob = this.aimJoystick.querySelector('.knob');
 
         const handleJoystick = (element, knob, callbackMove, callbackShoot) => {
-          let startX, startY, active = false;
-
           const moveKnobTo = (x, y) => {
             const rect = element.getBoundingClientRect();
             const centerX = rect.width / 2;
@@ -191,40 +190,61 @@
 
           element.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            const touch = e.touches[0];
-            startX = touch.clientX;
-            startY = touch.clientY;
-            active = true;
+            for (let touch of e.changedTouches) {
+              const rect = element.getBoundingClientRect();
+              const x = touch.clientX - rect.left;
+              const y = touch.clientY - rect.top;
+              if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
+                if (element === this.moveJoystick && this.touchIds.move === null) {
+                  this.touchIds.move = touch.identifier;
+                } else if (element === this.aimJoystick && this.touchIds.aim === null) {
+                  this.touchIds.aim = touch.identifier;
+                }
+              }
+            }
           });
 
           element.addEventListener('touchmove', (e) => {
             e.preventDefault();
-            if (!active) return;
-            const touch = e.touches[0];
-            const { dx, dy, dist } = moveKnobTo(touch.clientX, touch.clientY);
-            if (callbackMove) {
-              if (element === this.moveJoystick) {
-                // Normalized direction for move joystick
-                const magnitude = Math.sqrt(dx * dx + dy * dy);
-                if (magnitude > 0.2) {
-                  const normDx = parseFloat(dx) / magnitude;
-                  const normDy = parseFloat(dy) / magnitude;
-                  callbackMove(normDx, normDy, true);
-                } else {
-                  callbackMove(0, 0, true);
+            for (let touch of e.touches) {
+              if (element === this.moveJoystick && touch.identifier === this.touchIds.move) {
+                const { dx, dy } = moveKnobTo(touch.clientX, touch.clientY);
+                if (callbackMove) {
+                  const magnitude = Math.sqrt(dx * dx + dy * dy);
+                  if (magnitude > 0.2) {
+                    const normDx = parseFloat(dx) / magnitude;
+                    const normDy = parseFloat(dy) / magnitude;
+                    callbackMove(normDx, normDy, true);
+                  } else {
+                    callbackMove(0, 0, true);
+                  }
                 }
-              } else {
-                callbackMove(dx, dy, true);
+              } else if (element === this.aimJoystick && touch.identifier === this.touchIds.aim) {
+                const { dx, dy, dist } = moveKnobTo(touch.clientX, touch.clientY);
+                if (callbackMove) {
+                  callbackMove(dx, dy, true);
+                }
+                if (callbackShoot && dist > 0.3) {
+                  callbackShoot(dist, true);
+                }
               }
             }
-            if (callbackShoot && dist > 0.3) callbackShoot(dist, true);
           });
 
-          element.addEventListener('touchend', () => {
-            resetKnob();
-            active = false;
-            if (callbackMove) callbackMove(0, 0, true);
-            if (callbackShoot) callbackShoot(0, false);
+          element.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            for (let touch of e.changedTouches) {
+              if (element === this.moveJoystick && touch.identifier === this.touchIds.move) {
+                resetKnob();
+                this.touchIds.move = null;
+                if (callbackMove) callbackMove(0, 0, true);
+              } else if (element === this.aimJoystick && touch.identifier === this.touchIds.aim) {
+                resetKnob();
+                this.touchIds.aim = null;
+                if (callbackMove) callbackMove(0, 0, true);
+                if (callbackShoot) callbackShoot(0, false);
+              }
+            }
           });
         };
 
